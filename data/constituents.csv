@@ -1,0 +1,31 @@
+순위,티커,기업명,정책축,총점,수혜1,수혜2,감사
+1,EIX,Edison International,원전·전력,6,원자력·전력망 투자,투자·생산세액공제,
+2,NEE,NextEra Energy,원전·전력,6,풍력·태양광 확대,IRA 세액공제,
+3,LNT,Alliant Energy,원전·전력,6,규제 요금기저 투자,생산·투자세액공제,
+4,PEG,PSEG,원전·전력,6,원자력 발전 지원,생산세액공제,
+5,WEC,WEC Energy Group,원전·전력,6,전력 인프라 보조금,IRA·IIJA 투자,
+6,SO,Southern Company,원전·전력,6,원전 설비 확대,생산세액공제,
+7,LMT,Lockheed Martin,방위·우주,6,미 국방예산,방산 공급망 재건,
+8,FSLR,First Solar,반도체·AI,6,첨단제조 생산세액공제,미국 태양광 제조,
+9,MCHP,Microchip Technology,반도체·AI,6,반도체 정부지원,미국 생산 인센티브,
+10,GLW,Corning,반도체·AI,6,CHIPS법 투자,광학·디스플레이 소재,
+11,HII,Huntington Ingalls,방위·우주,6,미 해군 함정 발주,잠수함·항모 투자,
+12,WMB,Williams Companies,에너지,5,천연가스 인프라,LNG 수출 확대,
+13,TRGP,Targa Resources,에너지,5,퍼미안 생산 증가,미드스트림 물동량,
+14,ROP,Roper Technologies,반도체·AI,5,산업 소프트웨어·계측,미국 매출 순도,
+15,NOC,Northrop Grumman,방위·우주,5,국방 현대화,우주·핵 억지력 예산,
+16,KMI,Kinder Morgan,에너지,5,가스 파이프라인,LNG 수출 연결망,
+17,MU,Micron Technology,반도체·AI,5,CHIPS법 보조금,미국 메모리 팹 투자,
+18,STLD,Steel Dynamics,핵심소재,5,미국 전기로 철강,온쇼어링 소재 수요,
+19,EXE,Expand Energy,에너지,5,미국 천연가스 생산,LNG 수출 수요,
+20,TDY,Teledyne Technologies,반도체·AI,5,방산·우주 계측,정부 조달·지원,
+21,NUE,Nucor,핵심소재,5,232조 철강 보호,미국 제조·인프라 수요,
+22,OXY,Occidental Petroleum,에너지,5,퍼미안 증산,미국 온쇼어 개발,
+23,AXON,Axon Enterprise,방위·우주,5,법집행 장비 현대화,미국 공공부문 수요,
+24,BRK.B,Berkshire Hathaway,금융,5,에너지 자회사 세액공제,LNG·전력망 투자,금융 축과 수혜 근거 불일치
+25,GE,GE Aerospace,방위·우주,4,항공우주 공급망,국방 지출 확대,
+26,HWM,Howmet Aerospace,방위·우주,4,항공엔진·구조재,미국 제조 수요,
+27,EOG,EOG Resources,에너지,4,미국 상류 생산,에너지 자립 정책,해외 onshore 문맥 포함
+28,MRK,Merck & Co.,바이오,4,미국 바이오 공급망,높은 미국 매출 기여,IRA 약가협상 문맥 재검토
+29,ABBV,AbbVie,바이오,4,미국 중심 의약품 매출,면역·종양 특허 해자,IRA 약가협상은 비용 요인
+30,DD,DuPont,핵심소재,4,전자·반도체 소재,핵심 공급망 내재화,IRA 소비세 오계상 검토
