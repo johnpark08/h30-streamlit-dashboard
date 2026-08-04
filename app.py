@@ -18,47 +18,49 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    :root { --cyan:#32c9e8; --purple:#9b8afb; --line:#21334a; --surface:#0b1727; --surface-2:#0e1d30; --muted:#8fa1b8; }
-    .stApp { background: radial-gradient(circle at 88% -5%, rgba(32,91,143,.34) 0, transparent 26%), radial-gradient(circle at 4% 18%, rgba(93,71,150,.14) 0, transparent 24%), #060e19; }
-    [data-testid="stHeader"] { background: rgba(6,14,25,.82); backdrop-filter: blur(14px); }
-    .block-container { max-width: 1320px; padding-top: 1.35rem; padding-bottom: 3rem; }
-    h1, h2, h3, p, label, [data-testid="stMetricLabel"] { color: #ecf3fb; }
-    .hero-panel { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(260px,.65fr); gap:1.5rem; align-items:end; border:1px solid var(--line); border-radius:18px; background:linear-gradient(135deg,rgba(14,29,48,.94),rgba(8,19,33,.96)); padding:1.65rem 1.8rem; box-shadow:0 22px 60px rgba(0,0,0,.18); }
+    :root { --cyan:#0797ad; --purple:#7568d7; --line:#dbe4ee; --surface:#ffffff; --surface-2:#f8fafc; --muted:#66788e; --ink:#132238; }
+    .stApp { background:radial-gradient(circle at 86% -8%, rgba(53,183,202,.16) 0, transparent 25%), radial-gradient(circle at 3% 14%, rgba(117,104,215,.08) 0, transparent 22%), #f4f7fb; color:var(--ink); font-family:Inter,Pretendard,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    [data-testid="stHeader"] { background:rgba(244,247,251,.84); backdrop-filter:blur(16px); border-bottom:1px solid rgba(219,228,238,.7); }
+    .block-container, [data-testid="stMainBlockContainer"] { max-width:1180px !important; width:calc(100% - 2rem) !important; margin-inline:auto !important; padding-top:1.35rem; padding-bottom:3rem; box-sizing:border-box; }
+    h1, h2, h3, p, label, [data-testid="stMetricLabel"] { color:var(--ink); }
+    .hero-panel { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(220px,.55fr); gap:1.5rem; align-items:end; border:1px solid #d8e5ed; border-radius:20px; background:linear-gradient(120deg,#ffffff 0%,#ffffff 58%,#edf9fb 100%); padding:1.75rem 1.9rem; box-shadow:0 18px 48px rgba(48,74,103,.09); }
     .hero-kicker { color:var(--cyan); letter-spacing:.17em; font-size:.68rem; font-weight:700; }
     .hero-title { font-size:2.55rem; line-height:1.08; letter-spacing:-.045em; font-weight:720; margin:.55rem 0 .7rem; }
-    .hero-title span { color:var(--cyan); }
-    .hero-copy { color:#9eb0c5; max-width:760px; line-height:1.65; font-size:.92rem; }
+    .hero-title span { color:#078aa0; }
+    .hero-copy { color:#60748a; max-width:660px; line-height:1.65; font-size:.92rem; }
     .hero-live { border-left:1px solid var(--line); padding-left:1.5rem; }
-    .live-status { display:flex; align-items:center; gap:.45rem; color:#92a6bc; letter-spacing:.08em; font-size:.67rem; text-transform:uppercase; }
-    .live-dot { width:7px; height:7px; border-radius:50%; background:var(--cyan); box-shadow:0 0 12px rgba(50,201,232,.9); }
-    .hero-index { color:#f4f8fc; font-size:2.4rem; letter-spacing:-.04em; font-weight:700; margin:.35rem 0 .05rem; }
-    .hero-change { color:var(--cyan); font-size:.9rem; font-weight:650; }
-    .hero-date { color:#6f849c; font-size:.72rem; margin-top:.35rem; }
+    .live-status { display:flex; align-items:center; gap:.45rem; color:#6c8096; letter-spacing:.08em; font-size:.67rem; text-transform:uppercase; }
+    .live-dot { width:7px; height:7px; border-radius:50%; background:#0aa1b7; box-shadow:0 0 0 4px rgba(10,161,183,.12); }
+    .hero-index { color:#15263c; font-size:2.4rem; letter-spacing:-.04em; font-weight:700; margin:.35rem 0 .05rem; }
+    .hero-change { color:#078aa0; font-size:.9rem; font-weight:650; }
+    .hero-date { color:#7a8da1; font-size:.72rem; margin-top:.35rem; }
     .period-grid { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; margin:1rem 0 1.1rem; }
-    .period-card { border:1px solid var(--line); border-radius:12px; background:rgba(10,23,39,.76); padding:.9rem 1.05rem; }
+    .period-card { border:1px solid var(--line); border-radius:13px; background:rgba(255,255,255,.82); padding:.9rem 1.05rem; box-shadow:0 6px 18px rgba(48,74,103,.045); }
     .period-card.purple { border-left:3px solid var(--purple); }
     .period-card.cyan { border-left:3px solid var(--cyan); }
-    .period-card b { display:block; color:#eef5fc; font-size:.95rem; margin:.2rem 0; }
-    .period-card small { color:#788ca5; }
-    .period-card em { font-style:normal; font-size:.62rem; letter-spacing:.13em; color:#7388a1; }
+    .period-card b { display:block; color:#1b2d43; font-size:.95rem; margin:.2rem 0; }
+    .period-card small { color:#71849a; }
+    .period-card em { font-style:normal; font-size:.62rem; letter-spacing:.13em; color:#73859a; }
     .section-label { color:var(--cyan); letter-spacing:.13em; font-size:.65rem; font-weight:700; margin-bottom:.2rem; text-transform:uppercase; }
-    .section-title { color:#f0f6fc; font-size:1.24rem; font-weight:700; letter-spacing:-.02em; margin-bottom:.2rem; }
-    .section-copy { color:#7f93aa; font-size:.8rem; margin-bottom:.85rem; }
-    .data-note { border:1px solid rgba(155,138,251,.28); border-radius:10px; background:rgba(155,138,251,.055); padding:.8rem .95rem; color:#afa4c7; font-size:.78rem; line-height:1.6; }
-    .live-note { border:1px solid rgba(50,201,232,.25); border-radius:10px; background:rgba(50,201,232,.045); padding:.8rem .95rem; color:#91aabd; font-size:.78rem; line-height:1.6; }
-    .audit-note { border:1px solid #6b5228; background:rgba(245,158,11,.055); padding:1rem 1.1rem; color:#d1aa68; font-size:.82rem; line-height:1.65; }
-    [data-testid="stMetric"] { background:linear-gradient(145deg,var(--surface-2),var(--surface)); border:1px solid var(--line); border-radius:12px; padding:.9rem 1rem; min-height:112px; }
-    [data-testid="stMetricLabel"] { color:#8ea2b9; font-size:.78rem; }
-    [data-testid="stMetricValue"] { color:#edf5fc; letter-spacing:-.035em; }
+    .section-title { color:#17283e; font-size:1.24rem; font-weight:700; letter-spacing:-.02em; margin-bottom:.2rem; }
+    .section-copy { color:#718399; font-size:.8rem; margin-bottom:.85rem; }
+    .data-note { border:1px solid rgba(117,104,215,.2); border-radius:11px; background:#f6f4ff; padding:.8rem .95rem; color:#625b89; font-size:.78rem; line-height:1.6; }
+    .live-note { border:1px solid rgba(7,151,173,.2); border-radius:11px; background:#edf9fb; padding:.8rem .95rem; color:#52717a; font-size:.78rem; line-height:1.6; }
+    .audit-note { border:1px solid #efd79a; border-radius:11px; background:#fff9e9; padding:1rem 1.1rem; color:#795e28; font-size:.82rem; line-height:1.65; }
+    [data-testid="stMetric"] { background:#ffffff; border:1px solid var(--line); border-radius:13px; padding:.9rem 1rem; min-height:112px; box-shadow:0 8px 22px rgba(48,74,103,.055); }
+    [data-testid="stMetricLabel"] { color:#718399; font-size:.78rem; }
+    [data-testid="stMetricValue"] { color:#17283e; letter-spacing:-.035em; }
     [data-testid="stMetricDelta"] { font-size:.76rem; }
-    [data-testid="stVegaLiteChart"] { background:rgba(10,23,39,.68); border:1px solid var(--line); border-radius:14px; padding:.6rem .55rem .15rem; }
-    [data-testid="stDataFrame"], [data-testid="stTable"] { border:1px solid var(--line); border-radius:12px; overflow:hidden; }
-    [data-baseweb="tab-list"] { gap:.25rem; background:rgba(10,23,39,.72); border:1px solid var(--line); border-radius:12px; padding:.3rem; }
-    [data-baseweb="tab"] { border-radius:8px; padding:.55rem .95rem; }
-    [data-baseweb="tab"][aria-selected="true"] { background:#14263c; }
+    [data-testid="stVegaLiteChart"] { background:#ffffff; border:1px solid var(--line); border-radius:14px; padding:.6rem .55rem .15rem; box-shadow:0 8px 24px rgba(48,74,103,.045); }
+    [data-testid="stDataFrame"], [data-testid="stTable"] { border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:0 8px 24px rgba(48,74,103,.04); }
+    [data-baseweb="tab-list"] { gap:.25rem; background:rgba(255,255,255,.82); border:1px solid var(--line); border-radius:12px; padding:.3rem; box-shadow:0 6px 18px rgba(48,74,103,.04); }
+    [data-baseweb="tab"] { border-radius:8px; padding:.55rem .95rem; color:#53677e; }
+    [data-baseweb="tab"][aria-selected="true"] { background:#eaf6f8; color:#0b7181; }
     [data-baseweb="tab-highlight"] { display:none; }
+    [data-baseweb="input"] > div, [data-baseweb="select"] > div { background:#ffffff; border-color:var(--line); }
+    [data-testid="stCaptionContainer"] { color:#73859a; }
     hr { border-color:var(--line); }
-    .footer { margin-top:2.5rem; border-top:1px solid var(--line); padding-top:1rem; color:#5d718a; font-size:.7rem; letter-spacing:.08em; }
+    .footer { margin-top:2.5rem; border-top:1px solid var(--line); padding-top:1rem; color:#7a8ca0; font-size:.7rem; letter-spacing:.08em; }
     @media(max-width:800px) {
       .hero-panel { grid-template-columns:1fr; padding:1.25rem; }
       .hero-live { border-left:0; border-top:1px solid var(--line); padding:1rem 0 0; }
@@ -111,24 +113,24 @@ def cumulative_return_chart(df: pd.DataFrame, height: int = 390) -> alt.Chart:
     domain = [y_min - padding, y_max + padding]
 
     zero_line = alt.Chart(pd.DataFrame({"기준": [0]})).mark_rule(
-        color="#53657a", strokeDash=[4, 4], strokeWidth=1
+        color="#a0adba", strokeDash=[4, 4], strokeWidth=1
     ).encode(y="기준:Q")
     lines = (
         alt.Chart(long)
         .mark_line(point=alt.OverlayMarkDef(filled=True, size=34), strokeWidth=2.6)
         .encode(
-            x=alt.X("일자:T", title=None, axis=alt.Axis(format="%m/%d", grid=False, labelColor="#8194aa")),
+            x=alt.X("일자:T", title=None, axis=alt.Axis(format="%m/%d", grid=False, labelColor="#64748b")),
             y=alt.Y(
                 "누적수익률:Q",
                 title="기준일 대비 (%)",
                 scale=alt.Scale(domain=domain, zero=False, nice=False),
-                axis=alt.Axis(format="+.1f", grid=True, gridColor="#1c2d43", labelColor="#8194aa", titleColor="#8194aa"),
+                axis=alt.Axis(format="+.1f", grid=True, gridColor="#e5ebf1", labelColor="#64748b", titleColor="#64748b"),
             ),
             color=alt.Color(
                 "시리즈:N",
                 title=None,
-                scale=alt.Scale(domain=["H30", "SPY"], range=["#32c9e8", "#8b9bb0"]),
-                legend=alt.Legend(orient="top", direction="horizontal", labelColor="#a7b6c8"),
+                scale=alt.Scale(domain=["H30", "SPY"], range=["#078fa5", "#8291a3"]),
+                legend=alt.Legend(orient="top", direction="horizontal", labelColor="#526176"),
             ),
             tooltip=[
                 alt.Tooltip("일자:T", title="일자", format="%Y-%m-%d"),
@@ -146,18 +148,18 @@ def daily_return_chart(df: pd.DataFrame, height: int = 170) -> alt.Chart:
         alt.Chart(daily)
         .mark_bar(size=12, cornerRadius=2)
         .encode(
-            x=alt.X("일자:T", title=None, axis=alt.Axis(format="%m/%d", grid=False, labelColor="#8194aa")),
+            x=alt.X("일자:T", title=None, axis=alt.Axis(format="%m/%d", grid=False, labelColor="#64748b")),
             y=alt.Y(
                 "H30 일간등락:Q",
                 title="일간 등락 (%)",
                 scale=alt.Scale(zero=True),
-                axis=alt.Axis(format="+.1f", grid=True, gridColor="#1c2d43", labelColor="#8194aa", titleColor="#8194aa"),
+                axis=alt.Axis(format="+.1f", grid=True, gridColor="#e5ebf1", labelColor="#64748b", titleColor="#64748b"),
             ),
             color=alt.Color(
                 "등락:N",
                 title=None,
-                scale=alt.Scale(domain=["상승", "하락"], range=["#32c9e8", "#f07178"]),
-                legend=alt.Legend(orient="top", direction="horizontal", labelColor="#a7b6c8"),
+                scale=alt.Scale(domain=["상승", "하락"], range=["#0797ad", "#d85f6c"]),
+                legend=alt.Legend(orient="top", direction="horizontal", labelColor="#526176"),
             ),
             tooltip=[
                 alt.Tooltip("일자:T", title="일자", format="%Y-%m-%d"),
@@ -238,10 +240,10 @@ with overview:
     sector_df = sector_counts.reset_index()
     sector_chart = (
         alt.Chart(sector_df)
-        .mark_bar(color="#32c9e8", cornerRadiusEnd=4, height=18)
+        .mark_bar(color="#0797ad", cornerRadiusEnd=4, height=18)
         .encode(
-            x=alt.X("종목수:Q", title=None, axis=alt.Axis(tickMinStep=1, gridColor="#1c2d43", labelColor="#8194aa")),
-            y=alt.Y("정책축:N", title=None, sort=None, axis=alt.Axis(labelColor="#a7b6c8", labelLimit=240)),
+            x=alt.X("종목수:Q", title=None, axis=alt.Axis(tickMinStep=1, gridColor="#e5ebf1", labelColor="#64748b")),
+            y=alt.Y("정책축:N", title=None, sort=None, axis=alt.Axis(labelColor="#526176", labelLimit=240)),
             tooltip=["정책축:N", "종목수:Q"],
         )
         .properties(height=300)
@@ -260,7 +262,7 @@ with backtest:
     returns = pd.DataFrame(
         {"누적수익(%)": [123.6, 144.4]}, index=["H30", "SPY"]
     )
-    st.bar_chart(returns, horizontal=True, color="#a78bfa", height=260)
+    st.bar_chart(returns, horizontal=True, color="#7568d7", height=260)
     st.markdown(
         '<div class="data-note">7년 성과는 누적수익 역산·반올림 근사치입니다. 일별 에쿼티커브가 확정되기 전까지 선 그래프로 표시하지 않습니다. 정체성은 초과수익보다는 ‘정책 베타 + 약세장 방어’에 가깝습니다.</div>',
         unsafe_allow_html=True,
