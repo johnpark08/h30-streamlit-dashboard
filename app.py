@@ -1,3 +1,4 @@
+from html import escape
 from pathlib import Path
 
 import altair as alt
@@ -47,6 +48,26 @@ st.markdown(
     .data-note { border:1px solid rgba(117,104,215,.2); border-radius:11px; background:#f6f4ff; padding:.8rem .95rem; color:#625b89; font-size:.78rem; line-height:1.6; }
     .live-note { border:1px solid rgba(7,151,173,.2); border-radius:11px; background:#edf9fb; padding:.8rem .95rem; color:#52717a; font-size:.78rem; line-height:1.6; }
     .audit-note { border:1px solid #efd79a; border-radius:11px; background:#fff9e9; padding:1rem 1.1rem; color:#795e28; font-size:.82rem; line-height:1.65; }
+    .holdings-summary { display:flex; flex-wrap:wrap; align-items:center; gap:.55rem; margin:.15rem 0 1rem; color:#6a7e94; font-size:.75rem; }
+    .holdings-summary b { color:#173047; font-size:.86rem; }
+    .summary-dot { width:3px; height:3px; border-radius:50%; background:#9aabbb; }
+    .holding-card { --accent:#0797ad; position:relative; min-height:195px; margin-bottom:.8rem; overflow:hidden; border:1px solid var(--line); border-top:3px solid var(--accent); border-radius:15px; background:linear-gradient(145deg,#ffffff 0%,#fbfdff 100%); padding:1rem 1.1rem 1.05rem; box-shadow:0 9px 24px rgba(48,74,103,.055); }
+    .holding-card.axis-ai { --accent:#7568d7; }
+    .holding-card.axis-defense { --accent:#4d79bf; }
+    .holding-card.axis-energy { --accent:#d88946; }
+    .holding-card.axis-materials { --accent:#a97355; }
+    .holding-card.axis-bio { --accent:#42a079; }
+    .holding-card.axis-finance { --accent:#61758d; }
+    .holding-head { display:flex; align-items:center; justify-content:space-between; gap:.75rem; }
+    .holding-rank { color:#91a0b0; font-size:.68rem; font-weight:700; letter-spacing:.11em; }
+    .axis-chip { border:1px solid color-mix(in srgb, var(--accent) 28%, white); border-radius:999px; background:color-mix(in srgb, var(--accent) 9%, white); padding:.25rem .55rem; color:var(--accent); font-size:.64rem; font-weight:700; }
+    .holding-identity { display:flex; align-items:flex-end; justify-content:space-between; gap:.8rem; margin:.7rem 0 .25rem; }
+    .holding-ticker { color:#14273d; font-size:1.48rem; font-weight:760; letter-spacing:-.035em; line-height:1; }
+    .holding-score { color:#60748a; font-size:.67rem; white-space:nowrap; }
+    .holding-company { color:#667b91; font-size:.77rem; min-height:1.2rem; }
+    .benefit-list { display:grid; gap:.42rem; margin:.8rem 0 0; padding-top:.75rem; border-top:1px solid #e7edf3; }
+    .benefit-item { display:flex; align-items:flex-start; gap:.48rem; color:#3f5369; font-size:.76rem; line-height:1.45; }
+    .benefit-bullet { flex:0 0 auto; width:5px; height:5px; margin-top:.42rem; border-radius:50%; background:var(--accent); }
     [data-testid="stMetric"] { background:#ffffff; border:1px solid var(--line); border-radius:13px; padding:.9rem 1rem; min-height:112px; box-shadow:0 8px 22px rgba(48,74,103,.055); }
     [data-testid="stMetricLabel"] { color:#718399; font-size:.78rem; }
     [data-testid="stMetricValue"] { color:#17283e; letter-spacing:-.035em; }
@@ -66,6 +87,7 @@ st.markdown(
       .hero-live { border-left:0; border-top:1px solid var(--line); padding:1rem 0 0; }
       .hero-title { font-size:2rem; }
       .period-grid { grid-template-columns:1fr; gap:.6rem; }
+      .holding-card { min-height:auto; }
     }
     </style>
     """,
@@ -233,6 +255,45 @@ def section_header(label: str, title: str, copy: str) -> None:
         f'<div class="section-label">{label}</div><div class="section-title">{title}</div><div class="section-copy">{copy}</div>',
         unsafe_allow_html=True,
     )
+
+
+AXIS_CARD_CLASS = {
+    "반도체·AI": "axis-ai",
+    "방위·우주": "axis-defense",
+    "에너지": "axis-energy",
+    "핵심소재": "axis-materials",
+    "바이오": "axis-bio",
+    "금융": "axis-finance",
+}
+
+
+def holding_card(row: pd.Series) -> str:
+    rank = int(row["순위"])
+    ticker = escape(str(row["티커"]))
+    company = escape(str(row["기업명"]))
+    axis = escape(str(row["정책축"]))
+    score_value = float(row["총점"])
+    score = f"{score_value:g}"
+    benefit1 = escape(str(row["수혜1"]))
+    benefit2 = escape(str(row["수혜2"]))
+    axis_class = AXIS_CARD_CLASS.get(str(row["정책축"]), "")
+    return f"""
+    <div class="holding-card {axis_class}">
+      <div class="holding-head">
+        <span class="holding-rank">RANK {rank:02d}</span>
+        <span class="axis-chip">{axis}</span>
+      </div>
+      <div class="holding-identity">
+        <span class="holding-ticker">{ticker}</span>
+        <span class="holding-score">총점 {score} · 동일가중 3.33%</span>
+      </div>
+      <div class="holding-company">{company}</div>
+      <div class="benefit-list">
+        <div class="benefit-item"><span class="benefit-bullet"></span><span>{benefit1}</span></div>
+        <div class="benefit-item"><span class="benefit-bullet"></span><span>{benefit2}</span></div>
+      </div>
+    </div>
+    """
 
 
 current = load_current()
@@ -465,14 +526,22 @@ with live:
     )
 
 with holdings:
-    st.subheader("최종 30종목과 정책 수혜")
-    search_col, axis_col = st.columns([2, 1])
+    section_header(
+        "Constituents",
+        "최종 30종목과 정책 수혜",
+        "카드로 빠르게 훑어보고, 필요할 때 간단한 표로 전환할 수 있습니다.",
+    )
+    search_col, axis_col, view_col = st.columns([1.55, 1.05, 0.8])
     query = search_col.text_input("종목 검색", placeholder="티커·기업명·수혜 내용")
     axes = axis_col.multiselect("정책축", constituents["정책축"].drop_duplicates().tolist())
+    view_mode = view_col.segmented_control(
+        "보기 방식", ["카드", "간단 표"], default="카드"
+    )
 
     filtered = constituents.copy()
     if query:
-        mask = filtered.astype(str).apply(
+        searchable = filtered[["티커", "기업명", "정책축", "수혜1", "수혜2"]]
+        mask = searchable.astype(str).apply(
             lambda row: row.str.contains(query, case=False, na=False).any(), axis=1
         )
         filtered = filtered[mask]
@@ -481,23 +550,35 @@ with holdings:
 
     shown = filtered.copy()
     shown["주요 정책 수혜"] = "• " + shown["수혜1"] + "\n• " + shown["수혜2"]
-    shown["감사"] = shown["감사"].fillna("—")
-    st.dataframe(
-        shown[["순위", "티커", "기업명", "정책축", "총점", "주요 정책 수혜", "감사"]],
-        hide_index=True,
-        width="stretch",
-        height=690,
-        column_config={
-            "순위": st.column_config.NumberColumn("순위", width="small"),
-            "티커": st.column_config.TextColumn("티커", width="small"),
-            "기업명": st.column_config.TextColumn("기업명", width="medium"),
-            "정책축": st.column_config.TextColumn("정책축", width="small"),
-            "총점": st.column_config.NumberColumn("총점", width="small"),
-            "주요 정책 수혜": st.column_config.TextColumn("주요 정책 수혜", width="large"),
-            "감사": st.column_config.TextColumn("감사", width="medium"),
-        },
+    st.markdown(
+        f'<div class="holdings-summary"><b>{len(shown)}개 기업</b><span class="summary-dot"></span><span>{shown["정책축"].nunique()}개 정책축</span><span class="summary-dot"></span><span>종목당 3.33% 동일가중</span></div>',
+        unsafe_allow_html=True,
     )
-    st.caption("감사 표시는 편출을 의미하지 않으며, 정책 문맥 또는 축 정합성을 추가 공시해야 하는 종목입니다.")
+
+    if shown.empty:
+        st.info("조건에 맞는 종목이 없습니다. 검색어나 정책축 필터를 조정해 주세요.")
+    elif view_mode == "간단 표":
+        st.dataframe(
+            shown[["순위", "티커", "기업명", "정책축", "총점", "주요 정책 수혜"]],
+            hide_index=True,
+            width="stretch",
+            height=690,
+            column_config={
+                "순위": st.column_config.NumberColumn("순위", width="small"),
+                "티커": st.column_config.TextColumn("티커", width="small"),
+                "기업명": st.column_config.TextColumn("기업명", width="medium"),
+                "정책축": st.column_config.TextColumn("정책축", width="small"),
+                "총점": st.column_config.NumberColumn("총점", width="small"),
+                "주요 정책 수혜": st.column_config.TextColumn("주요 정책 수혜", width="large"),
+            },
+        )
+    else:
+        records = [row for _, row in shown.sort_values("순위").iterrows()]
+        for offset in range(0, len(records), 2):
+            card_columns = st.columns(2)
+            for column, row in zip(card_columns, records[offset : offset + 2]):
+                with column:
+                    st.markdown(holding_card(row), unsafe_allow_html=True)
 
 with methodology:
     st.subheader("방법론")
