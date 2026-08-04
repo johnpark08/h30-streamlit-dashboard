@@ -35,6 +35,18 @@ st.markdown(
     .hero-index { color:#15263c; font-size:2.4rem; letter-spacing:-.04em; font-weight:700; margin:.35rem 0 .05rem; }
     .hero-change { color:#078aa0; font-size:.9rem; font-weight:650; }
     .hero-date { color:#7a8da1; font-size:.72rem; margin-top:.35rem; }
+    .profile-toolbar { display:flex; justify-content:flex-end; align-items:center; min-height:42px; color:#6f8195; font-size:.74rem; }
+    .profile-toolbar b { color:#1b3047; font-weight:700; }
+    [data-testid="stDownloadButton"] > button { min-height:42px; border:1px solid #cddde8; border-radius:9px; background:#ffffff; color:#087e91; font-weight:650; box-shadow:0 5px 14px rgba(48,74,103,.04); }
+    [data-testid="stDownloadButton"] > button:hover { border-color:#0797ad; color:#087e91; }
+    .index-spec-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); overflow:hidden; margin:.1rem 0 1.15rem; border:1px solid #d7e2eb; border-top:3px solid #0797ad; border-radius:12px; background:#ffffff; box-shadow:0 8px 24px rgba(48,74,103,.045); }
+    .index-spec { min-height:92px; padding:.9rem 1rem; border-right:1px solid #e2e9f0; border-bottom:1px solid #e2e9f0; }
+    .index-spec:nth-child(3n) { border-right:0; }
+    .index-spec:nth-last-child(-n+3) { border-bottom:0; }
+    .spec-label { display:block; margin-bottom:.42rem; color:#6f8298; font-size:.67rem; font-weight:650; letter-spacing:.04em; }
+    .spec-value { display:flex; flex-wrap:wrap; align-items:center; gap:.38rem; color:#1b2d43; font-size:.9rem; font-weight:700; }
+    .spec-chip { display:inline-flex; align-items:center; border:1px solid #d6e3eb; border-radius:7px; background:#f6fafc; padding:.28rem .48rem; color:#31536b; font-size:.72rem; font-weight:650; }
+    .spec-note { color:#789; font-size:.69rem; font-weight:500; }
     .period-grid { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; margin:1rem 0 1.1rem; }
     .period-card { border:1px solid var(--line); border-radius:13px; background:rgba(255,255,255,.82); padding:.9rem 1.05rem; box-shadow:0 6px 18px rgba(48,74,103,.045); }
     .period-card.purple { border-left:3px solid var(--purple); }
@@ -87,6 +99,9 @@ st.markdown(
       .hero-live { border-left:0; border-top:1px solid var(--line); padding:1rem 0 0; }
       .hero-title { font-size:2rem; }
       .period-grid { grid-template-columns:1fr; gap:.6rem; }
+      .index-spec-grid { grid-template-columns:1fr; }
+      .index-spec, .index-spec:nth-child(3n), .index-spec:nth-last-child(-n+3) { border-right:0; border-bottom:1px solid #e2e9f0; }
+      .index-spec:last-child { border-bottom:0; }
       .holding-card { min-height:auto; }
     }
     </style>
@@ -325,8 +340,8 @@ st.markdown(
     <div class="hero-panel">
       <div>
         <div class="hero-kicker">AMERICAN GLOBAL HEGEMONY TOP30 INDEX</div>
-        <div class="hero-title">정책 수혜의 흐름을<br><span>지수로 추적합니다.</span></div>
-        <div class="hero-copy">S&amp;P500 기업의 정책축·10-K 정책 문맥·미국 매출 순도를 결합한 동일가중 30종목 지수입니다. 백테스트와 공식 산출 구간을 분리해 추적합니다.</div>
+        <div class="hero-title">미국 글로벌 헤게모니<br><span>TOP30 지수</span></div>
+        <div class="hero-copy">미국 글로벌 헤게모니 TOP30 지수는 기준일 현재 S&amp;P500 구성종목을 대상으로 정책축 적합성, 10-K 정책 문맥, 미국 매출 순도를 평가해 30종목을 선정합니다. 종목은 동일가중으로 구성하고 정책축당 최대 6종목으로 제한하며, 배당을 반영하지 않는 가격지수로 산출합니다.</div>
       </div>
       <div class="hero-live">
         <div class="live-status"><span class="live-dot"></span>Official index</div>
@@ -354,6 +369,35 @@ overview, backtest_tab, live, holdings, methodology = st.tabs(
 )
 
 with overview:
+    profile_download, profile_date = st.columns([1, 1])
+    with profile_download:
+        st.download_button(
+            "▣ Methodology Summary",
+            data=(ROOT / "methodology.txt").read_text(encoding="utf-8"),
+            file_name="H30_방법론_요약.txt",
+            mime="text/plain",
+            key="overview_methodology_download",
+        )
+    with profile_date:
+        st.markdown(
+            f'<div class="profile-toolbar">공식 산출 개시일&nbsp; <b>2026.07.01</b>&nbsp;&nbsp;·&nbsp;&nbsp;데이터 기준일&nbsp; <b>{latest["일자"].strftime("%Y.%m.%d")}</b></div>',
+            unsafe_allow_html=True,
+        )
+
+    st.markdown(
+        """
+        <div class="index-spec-grid">
+          <div class="index-spec"><span class="spec-label">지수 유형</span><div class="spec-value"><span class="spec-chip">Price Index</span><span class="spec-chip">Equal Weight</span></div></div>
+          <div class="index-spec"><span class="spec-label">유니버스</span><div class="spec-value">S&amp;P 500 구성종목</div><span class="spec-note">매년 6월 30일 기준</span></div>
+          <div class="index-spec"><span class="spec-label">벤치마크</span><div class="spec-value">SPY</div><span class="spec-note">S&amp;P 500 ETF</span></div>
+          <div class="index-spec"><span class="spec-label">기준값</span><div class="spec-value">1,000</div><span class="spec-note">2026년 7월 1일</span></div>
+          <div class="index-spec"><span class="spec-label">리밸런싱</span><div class="spec-value">연 1회</div><span class="spec-note">7월 첫 영업일 적용</span></div>
+          <div class="index-spec"><span class="spec-label">구성 규칙</span><div class="spec-value">30종목</div><span class="spec-note">정책축당 최대 6종목 · 종목당 3.33%</span></div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("현재 지수", f"{latest['지수']:,.2f}", f"{current_return:+.2f}%")
     c2.metric("SPY 대비", f"{current_return - spy_return:+.2f}%p")
