@@ -536,7 +536,7 @@ with backtest_tab:
         st.caption("매년 30종목 · 정책축당 최대 6종목 · 2019~2025 빈티지")
 
 with live:
-    section_header("Current · Official", "2026년 7월 공식 지수", "누적 방향과 일간 진폭을 분리해 표시합니다.")
+    section_header("Current · Official", "2026년 8월 4일 공식 지수", "누적 방향과 일간 진폭을 분리해 표시합니다.")
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("최신 종가", f"{latest['지수']:,.2f}", latest["일자"].strftime("%Y-%m-%d"))
     c2.metric("출시 후 수익률", f"{current_return:+.2f}%")
