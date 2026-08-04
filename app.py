@@ -84,6 +84,14 @@ def load_constituents() -> pd.DataFrame:
     return pd.read_csv(DATA / "constituents.csv")
 
 
+@st.cache_data
+def load_backtest() -> pd.DataFrame:
+    df = pd.read_csv(DATA / "backtest_weekly.csv", encoding="utf-8-sig")
+    df = df.rename(columns={"룰유니버스_3년체인": "H30"})
+    df["일자"] = pd.to_datetime(df["일자"])
+    return df[df["일자"] <= pd.Timestamp("2026-06-29")].sort_values("일자")
+
+
 def max_drawdown(series: pd.Series) -> float:
     return float((series / series.cummax() - 1).min() * 100)
 
@@ -99,7 +107,32 @@ def performance_frame(df: pd.DataFrame) -> pd.DataFrame:
     return prepared
 
 
-def cumulative_return_chart(df: pd.DataFrame, height: int = 390) -> alt.Chart:
+def backtest_performance_frame(df: pd.DataFrame) -> pd.DataFrame:
+    prepared = df.copy()
+    prepared["H30 누적수익률"] = (prepared["H30"] / prepared["H30"].iloc[0] - 1) * 100
+    prepared["SPY 누적수익률"] = (prepared["SPY"] / prepared["SPY"].iloc[0] - 1) * 100
+    return prepared
+
+
+def period_stats(df: pd.DataFrame, column: str) -> dict[str, float]:
+    returns = df[column].pct_change().dropna()
+    total_return = float(df[column].iloc[-1] / df[column].iloc[0] - 1)
+    years = float((df["일자"].iloc[-1] - df["일자"].iloc[0]).days / 365.25)
+    cagr = (1 + total_return) ** (1 / years) - 1 if years > 0 else 0.0
+    volatility = float(returns.std() * (52**0.5)) if len(returns) > 1 else 0.0
+    sharpe = float(returns.mean() / returns.std() * (52**0.5)) if len(returns) > 1 and returns.std() else 0.0
+    return {
+        "total_return": total_return * 100,
+        "cagr": cagr * 100,
+        "volatility": volatility * 100,
+        "mdd": max_drawdown(df[column]),
+        "sharpe": sharpe,
+    }
+
+
+def cumulative_return_chart(
+    df: pd.DataFrame, height: int = 390, date_format: str = "%m/%d"
+) -> alt.Chart:
     long = df.melt(
         id_vars="일자",
         value_vars=["H30 누적수익률", "SPY 누적수익률"],
@@ -119,7 +152,7 @@ def cumulative_return_chart(df: pd.DataFrame, height: int = 390) -> alt.Chart:
         alt.Chart(long)
         .mark_line(point=alt.OverlayMarkDef(filled=True, size=34), strokeWidth=2.6)
         .encode(
-            x=alt.X("일자:T", title=None, axis=alt.Axis(format="%m/%d", grid=False, labelColor="#64748b")),
+            x=alt.X("일자:T", title=None, axis=alt.Axis(format=date_format, grid=False, labelColor="#64748b")),
             y=alt.Y(
                 "누적수익률:Q",
                 title="기준일 대비 (%)",
@@ -140,6 +173,31 @@ def cumulative_return_chart(df: pd.DataFrame, height: int = 390) -> alt.Chart:
         )
     )
     return (zero_line + lines).properties(height=height).configure_view(strokeOpacity=0)
+
+
+def regime_comparison_chart(df: pd.DataFrame, height: int = 250) -> alt.Chart:
+    return (
+        alt.Chart(df)
+        .mark_bar(cornerRadiusTopLeft=4, cornerRadiusTopRight=4, width=34)
+        .encode(
+            x=alt.X("구간:N", title=None, sort=["트럼프 2기", "출범 이전"], axis=alt.Axis(labelAngle=0, labelColor="#526176")),
+            xOffset="시리즈:N",
+            y=alt.Y(
+                "누적수익률:Q",
+                title="누적수익률 (%)",
+                axis=alt.Axis(format="+.0f", gridColor="#e5ebf1", labelColor="#64748b", titleColor="#64748b"),
+            ),
+            color=alt.Color(
+                "시리즈:N",
+                title=None,
+                scale=alt.Scale(domain=["H30", "SPY"], range=["#0797ad", "#9aa8b7"]),
+                legend=alt.Legend(orient="top", direction="horizontal", labelColor="#526176"),
+            ),
+            tooltip=["구간:N", "시리즈:N", alt.Tooltip("누적수익률:Q", format="+.2f")],
+        )
+        .properties(height=height)
+        .configure_view(strokeOpacity=0)
+    )
 
 
 def daily_return_chart(df: pd.DataFrame, height: int = 170) -> alt.Chart:
@@ -179,6 +237,7 @@ def section_header(label: str, title: str, copy: str) -> None:
 
 current = load_current()
 constituents = load_constituents()
+backtest_data = load_backtest()
 performance = performance_frame(current)
 latest = current.iloc[-1]
 current_return = (latest["지수"] / current.iloc[0]["지수"] - 1) * 100
@@ -187,6 +246,18 @@ daily_moves = performance["H30 일간등락"].dropna()
 best_day = float(daily_moves.max())
 worst_day = float(daily_moves.min())
 positive_ratio = float((daily_moves > 0).mean() * 100)
+
+TRUMP_START = pd.Timestamp("2025-01-21")
+PRE_TRUMP_END = pd.Timestamp("2025-01-13")
+BACKTEST_END = pd.Timestamp("2026-06-29")
+trump_period = backtest_data[
+    (backtest_data["일자"] >= TRUMP_START) & (backtest_data["일자"] <= BACKTEST_END)
+]
+pre_trump_period = backtest_data[backtest_data["일자"] <= PRE_TRUMP_END]
+trump_h30_stats = period_stats(trump_period, "H30")
+trump_spy_stats = period_stats(trump_period, "SPY")
+pre_trump_h30_stats = period_stats(pre_trump_period, "H30")
+pre_trump_spy_stats = period_stats(pre_trump_period, "SPY")
 
 st.markdown(
     f"""
@@ -208,24 +279,24 @@ st.markdown(
 )
 
 st.markdown(
-    """
+    f"""
     <div class="period-grid">
-      <div class="period-card purple"><em>HISTORICAL · APPROX.</em><b>7년 백테스트</b><small>2019.07 — 2026.06 · 7개 빈티지</small></div>
+      <div class="period-card purple"><em>PRIMARY BACKTEST · TRUMP 2.0</em><b>트럼프 2기 성과 {trump_h30_stats['total_return']:+.1f}%</b><small>2025.01.21 — 2026.06.29 · 주간 체인 지수</small></div>
       <div class="period-card cyan"><em>CURRENT · OFFICIAL</em><b>현재 공식 지수</b><small>2026.07.01 — 현재 · 기준값 1,000</small></div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
-overview, backtest, live, holdings, methodology = st.tabs(
-    ["Overview", "7년 백테스트", "현재 지수", "구성종목", "방법론·감사"]
+overview, backtest_tab, live, holdings, methodology = st.tabs(
+    ["Overview", "백테스트", "현재 지수", "구성종목", "방법론·감사"]
 )
 
 with overview:
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("현재 지수", f"{latest['지수']:,.2f}", f"{current_return:+.2f}%")
     c2.metric("SPY 대비", f"{current_return - spy_return:+.2f}%p")
-    c3.metric("7년 백테스트", "+123.6%", "SPY +144.4%")
+    c3.metric("트럼프 2기 백테스트", f"{trump_h30_stats['total_return']:+.1f}%", f"SPY {trump_spy_stats['total_return']:+.1f}%", delta_color="off")
     c4.metric("최종 구성", "30종목", "동일가중 3.33%")
 
     section_header("Official track", "공식 지수 누적수익률", "기준일을 0%로 두고 실제 등락 범위만 확대해 표시합니다.")
@@ -251,27 +322,113 @@ with overview:
     )
     st.altair_chart(sector_chart, width="stretch")
 
-with backtest:
-    section_header("Historical · Approx.", "2019.07 — 2026.06 백테스트 성과", "확정된 7개 빈티지를 기준으로 한 근사 성과 요약입니다.")
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("누적수익", "+123.6%", "SPY +144.4%")
-    c2.metric("CAGR", "12.0%", "SPY 13.4%")
-    c3.metric("최대낙폭", "−32%", "SPY −32%")
-    c4.metric("샤프", "0.43", "SPY 0.51")
-
-    returns = pd.DataFrame(
-        {"누적수익(%)": [123.6, 144.4]}, index=["H30", "SPY"]
-    )
-    st.bar_chart(returns, horizontal=True, color="#7568d7", height=260)
-    st.markdown(
-        '<div class="data-note">7년 성과는 누적수익 역산·반올림 근사치입니다. 일별 에쿼티커브가 확정되기 전까지 선 그래프로 표시하지 않습니다. 정체성은 초과수익보다는 ‘정책 베타 + 약세장 방어’에 가깝습니다.</div>',
-        unsafe_allow_html=True,
+with backtest_tab:
+    section_header(
+        "Primary regime · Trump 2.0",
+        "기간을 선택해 보는 백테스트",
+        "트럼프 2기 출범 이후를 기본 구간으로 두고, 이전 구간과 장기 근사치는 보조 정보로 분리했습니다.",
     )
 
-    st.subheader("연도별 정책축 구성 변화")
-    sector_history = pd.read_csv(DATA / "sector_history.csv").set_index("연도")
-    st.bar_chart(sector_history, stack=True, height=430)
-    st.caption("매년 30종목 · 정책축당 최대 6종목 · 2019~2025 빈티지")
+    period_option = st.radio(
+        "분석 구간",
+        ["트럼프 2기", "출범 이전", "전체 3년", "직접 설정"],
+        horizontal=True,
+        help="주간 체인 지수의 관측 구간을 선택합니다.",
+    )
+
+    if period_option == "트럼프 2기":
+        selected_start, selected_end = TRUMP_START, BACKTEST_END
+        period_label = "트럼프 2기"
+    elif period_option == "출범 이전":
+        selected_start, selected_end = backtest_data["일자"].min(), PRE_TRUMP_END
+        period_label = "출범 이전"
+    elif period_option == "전체 3년":
+        selected_start, selected_end = backtest_data["일자"].min(), BACKTEST_END
+        period_label = "전체 3년"
+    else:
+        custom_range = st.date_input(
+            "시작일 — 종료일",
+            value=(TRUMP_START.date(), BACKTEST_END.date()),
+            min_value=backtest_data["일자"].min().date(),
+            max_value=BACKTEST_END.date(),
+        )
+        if isinstance(custom_range, (tuple, list)) and len(custom_range) == 2:
+            selected_start, selected_end = map(pd.Timestamp, custom_range)
+        else:
+            selected_start, selected_end = TRUMP_START, BACKTEST_END
+        period_label = "직접 설정"
+
+    selected_period = backtest_data[
+        (backtest_data["일자"] >= selected_start) & (backtest_data["일자"] <= selected_end)
+    ]
+
+    if len(selected_period) < 2:
+        st.warning("성과를 계산하려면 서로 다른 주간 관측치가 2개 이상 필요합니다.")
+    else:
+        h30_stats = period_stats(selected_period, "H30")
+        selected_spy_stats = period_stats(selected_period, "SPY")
+        selected_performance = backtest_performance_frame(selected_period)
+
+        st.caption(
+            f"{period_label} · {selected_period['일자'].iloc[0].strftime('%Y-%m-%d')} — "
+            f"{selected_period['일자'].iloc[-1].strftime('%Y-%m-%d')} · {len(selected_period)}주 관측"
+        )
+        c1, c2, c3, c4, c5 = st.columns(5)
+        c1.metric("H30 누적수익", f"{h30_stats['total_return']:+.1f}%", f"SPY {selected_spy_stats['total_return']:+.1f}%", delta_color="off")
+        c2.metric("CAGR", f"{h30_stats['cagr']:.1f}%", f"SPY {selected_spy_stats['cagr']:.1f}%", delta_color="off")
+        c3.metric("최대낙폭", f"{h30_stats['mdd']:.1f}%", f"SPY {selected_spy_stats['mdd']:.1f}%", delta_color="off")
+        c4.metric("연환산 변동성", f"{h30_stats['volatility']:.1f}%", f"SPY {selected_spy_stats['volatility']:.1f}%", delta_color="off")
+        c5.metric("샤프", f"{h30_stats['sharpe']:.2f}", f"SPY {selected_spy_stats['sharpe']:.2f}", delta_color="off")
+
+        section_header("Weekly chain", "선택 구간 누적수익률", "선택한 첫 관측치를 0%로 재설정해 H30과 SPY의 흐름을 비교합니다.")
+        st.altair_chart(cumulative_return_chart(selected_performance, 430, "%Y.%m"), width="stretch")
+        st.markdown(
+            '<div class="live-note">주간 체인 지수 · 매년 빈티지 교체를 반영한 시점가용(PIT) 백테스트 · 2026-06-29 종료 · 2026-07-01 공식 지수와 비연결</div>',
+            unsafe_allow_html=True,
+        )
+
+    section_header("Supporting context", "출범 전후 성과 비교", "트럼프 2기를 핵심 구간으로 보고, 그 이전 관측 구간은 배경 정보로만 제시합니다.")
+    comparison = pd.DataFrame(
+        [
+            {"구간": "트럼프 2기", "시리즈": "H30", "누적수익률": trump_h30_stats["total_return"]},
+            {"구간": "트럼프 2기", "시리즈": "SPY", "누적수익률": trump_spy_stats["total_return"]},
+            {"구간": "출범 이전", "시리즈": "H30", "누적수익률": pre_trump_h30_stats["total_return"]},
+            {"구간": "출범 이전", "시리즈": "SPY", "누적수익률": pre_trump_spy_stats["total_return"]},
+        ]
+    )
+    compare_chart, compare_copy = st.columns([1.15, 0.85])
+    with compare_chart:
+        st.altair_chart(regime_comparison_chart(comparison), width="stretch")
+    with compare_copy:
+        st.markdown(
+            f"""
+            <div class="data-note">
+            <b>트럼프 2기</b> · 2025-01-21 — 2026-06-29<br>
+            H30 {trump_h30_stats['total_return']:+.1f}% · SPY {trump_spy_stats['total_return']:+.1f}%<br>
+            최대낙폭 H30 {trump_h30_stats['mdd']:.1f}% · SPY {trump_spy_stats['mdd']:.1f}%<br><br>
+            <b>출범 이전</b> · 2023-07-03 — 2025-01-13<br>
+            H30 {pre_trump_h30_stats['total_return']:+.1f}% · SPY {pre_trump_spy_stats['total_return']:+.1f}%<br>
+            최대낙폭 H30 {pre_trump_h30_stats['mdd']:.1f}% · SPY {pre_trump_spy_stats['mdd']:.1f}%
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+    with st.expander("7년 장기 맥락 보기 · 근사 요약"):
+        st.caption("2019.07 — 2026.06 · 확정 7개 빈티지 · 일별 에쿼티커브 미확정")
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("누적수익", "+123.6%", "SPY +144.4%", delta_color="off")
+        c2.metric("CAGR", "12.0%", "SPY 13.4%", delta_color="off")
+        c3.metric("최대낙폭", "−32%", "SPY −32%", delta_color="off")
+        c4.metric("샤프", "0.43", "SPY 0.51", delta_color="off")
+        st.markdown(
+            '<div class="data-note">7년 성과는 누적수익 역산·반올림 근사치입니다. 정확한 시계열이 확정되기 전까지 장기 방향을 보는 참고 수치로만 사용합니다.</div>',
+            unsafe_allow_html=True,
+        )
+        st.subheader("연도별 정책축 구성 변화")
+        sector_history = pd.read_csv(DATA / "sector_history.csv").set_index("연도")
+        st.bar_chart(sector_history, stack=True, height=410)
+        st.caption("매년 30종목 · 정책축당 최대 6종목 · 2019~2025 빈티지")
 
 with live:
     section_header("Current · Official", "2026년 7월 공식 지수", "누적 방향과 일간 진폭을 분리해 표시합니다.")
