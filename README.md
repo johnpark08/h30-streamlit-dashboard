@@ -1,4 +1,4 @@
-# H30 Streamlit Dashboard
+# T30 Streamlit Dashboard
 
 미국 글로벌 헤게모니 TOP30의 7년 백테스트와 2026년 7월 이후 공식 지수를 분리해 보여주는 Streamlit 대시보드입니다.
 

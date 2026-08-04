@@ -11,7 +11,7 @@ DATA = ROOT / "data"
 
 st.set_page_config(
     page_title="미국 글로벌 헤게모니 TOP30",
-    page_icon="H30",
+    page_icon="T30",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
@@ -124,7 +124,7 @@ def load_constituents() -> pd.DataFrame:
 @st.cache_data
 def load_backtest() -> pd.DataFrame:
     df = pd.read_csv(DATA / "backtest_weekly.csv", encoding="utf-8-sig")
-    df = df.rename(columns={"룰유니버스_3년체인": "H30"})
+    df = df.rename(columns={"룰유니버스_3년체인": "T30"})
     df["일자"] = pd.to_datetime(df["일자"])
     return df[df["일자"] <= pd.Timestamp("2026-06-29")].sort_values("일자")
 
@@ -135,10 +135,10 @@ def max_drawdown(series: pd.Series) -> float:
 
 def performance_frame(df: pd.DataFrame) -> pd.DataFrame:
     prepared = df.copy()
-    prepared["H30 누적수익률"] = (prepared["지수"] / prepared["지수"].iloc[0] - 1) * 100
+    prepared["T30 누적수익률"] = (prepared["지수"] / prepared["지수"].iloc[0] - 1) * 100
     prepared["SPY 누적수익률"] = (prepared["SPY지수"] / prepared["SPY지수"].iloc[0] - 1) * 100
-    prepared["H30 일간등락"] = prepared["지수"].pct_change() * 100
-    prepared["등락"] = prepared["H30 일간등락"].map(
+    prepared["T30 일간등락"] = prepared["지수"].pct_change() * 100
+    prepared["등락"] = prepared["T30 일간등락"].map(
         lambda value: "상승" if pd.notna(value) and value >= 0 else "하락"
     )
     return prepared
@@ -146,7 +146,7 @@ def performance_frame(df: pd.DataFrame) -> pd.DataFrame:
 
 def backtest_performance_frame(df: pd.DataFrame) -> pd.DataFrame:
     prepared = df.copy()
-    prepared["H30 누적수익률"] = (prepared["H30"] / prepared["H30"].iloc[0] - 1) * 100
+    prepared["T30 누적수익률"] = (prepared["T30"] / prepared["T30"].iloc[0] - 1) * 100
     prepared["SPY 누적수익률"] = (prepared["SPY"] / prepared["SPY"].iloc[0] - 1) * 100
     return prepared
 
@@ -172,7 +172,7 @@ def cumulative_return_chart(
 ) -> alt.Chart:
     long = df.melt(
         id_vars="일자",
-        value_vars=["H30 누적수익률", "SPY 누적수익률"],
+        value_vars=["T30 누적수익률", "SPY 누적수익률"],
         var_name="시리즈",
         value_name="누적수익률",
     )
@@ -199,7 +199,7 @@ def cumulative_return_chart(
             color=alt.Color(
                 "시리즈:N",
                 title=None,
-                scale=alt.Scale(domain=["H30", "SPY"], range=["#078fa5", "#8291a3"]),
+                scale=alt.Scale(domain=["T30", "SPY"], range=["#078fa5", "#8291a3"]),
                 legend=alt.Legend(orient="top", direction="horizontal", labelColor="#526176"),
             ),
             tooltip=[
@@ -210,6 +210,51 @@ def cumulative_return_chart(
         )
     )
     return (zero_line + lines).properties(height=height).configure_view(strokeOpacity=0)
+
+
+def index_point_chart(
+    df: pd.DataFrame, height: int = 390, date_format: str = "%m/%d"
+) -> alt.Chart:
+    long = df.melt(
+        id_vars="일자",
+        value_vars=["지수", "SPY지수"],
+        var_name="시리즈",
+        value_name="지수 포인트",
+    )
+    long["시리즈"] = long["시리즈"].map({"지수": "T30", "SPY지수": "SPY"})
+    y_min = float(long["지수 포인트"].min())
+    y_max = float(long["지수 포인트"].max())
+    padding = max((y_max - y_min) * 0.13, 2.0)
+    domain = [y_min - padding, y_max + padding]
+
+    base_line = alt.Chart(pd.DataFrame({"기준": [1000]})).mark_rule(
+        color="#a0adba", strokeDash=[4, 4], strokeWidth=1
+    ).encode(y="기준:Q")
+    lines = (
+        alt.Chart(long)
+        .mark_line(point=alt.OverlayMarkDef(filled=True, size=34), strokeWidth=2.6)
+        .encode(
+            x=alt.X("일자:T", title=None, axis=alt.Axis(format=date_format, grid=False, labelColor="#64748b")),
+            y=alt.Y(
+                "지수 포인트:Q",
+                title="지수 포인트",
+                scale=alt.Scale(domain=domain, zero=False, nice=False),
+                axis=alt.Axis(format=",.0f", grid=True, gridColor="#e5ebf1", labelColor="#64748b", titleColor="#64748b"),
+            ),
+            color=alt.Color(
+                "시리즈:N",
+                title=None,
+                scale=alt.Scale(domain=["T30", "SPY"], range=["#078fa5", "#8291a3"]),
+                legend=alt.Legend(orient="top", direction="horizontal", labelColor="#526176"),
+            ),
+            tooltip=[
+                alt.Tooltip("일자:T", title="일자", format="%Y-%m-%d"),
+                alt.Tooltip("시리즈:N", title="지수"),
+                alt.Tooltip("지수 포인트:Q", title="지수 포인트", format=",.2f"),
+            ],
+        )
+    )
+    return (base_line + lines).properties(height=height).configure_view(strokeOpacity=0)
 
 
 def regime_comparison_chart(df: pd.DataFrame, height: int = 250) -> alt.Chart:
@@ -227,7 +272,7 @@ def regime_comparison_chart(df: pd.DataFrame, height: int = 250) -> alt.Chart:
             color=alt.Color(
                 "시리즈:N",
                 title=None,
-                scale=alt.Scale(domain=["H30", "SPY"], range=["#0797ad", "#9aa8b7"]),
+                scale=alt.Scale(domain=["T30", "SPY"], range=["#0797ad", "#9aa8b7"]),
                 legend=alt.Legend(orient="top", direction="horizontal", labelColor="#526176"),
             ),
             tooltip=["구간:N", "시리즈:N", alt.Tooltip("누적수익률:Q", format="+.2f")],
@@ -238,14 +283,14 @@ def regime_comparison_chart(df: pd.DataFrame, height: int = 250) -> alt.Chart:
 
 
 def daily_return_chart(df: pd.DataFrame, height: int = 170) -> alt.Chart:
-    daily = df.dropna(subset=["H30 일간등락"])
+    daily = df.dropna(subset=["T30 일간등락"])
     bars = (
         alt.Chart(daily)
         .mark_bar(size=12, cornerRadius=2)
         .encode(
             x=alt.X("일자:T", title=None, axis=alt.Axis(format="%m/%d", grid=False, labelColor="#64748b")),
             y=alt.Y(
-                "H30 일간등락:Q",
+                "T30 일간등락:Q",
                 title="일간 등락 (%)",
                 scale=alt.Scale(zero=True),
                 axis=alt.Axis(format="+.1f", grid=True, gridColor="#e5ebf1", labelColor="#64748b", titleColor="#64748b"),
@@ -258,7 +303,7 @@ def daily_return_chart(df: pd.DataFrame, height: int = 170) -> alt.Chart:
             ),
             tooltip=[
                 alt.Tooltip("일자:T", title="일자", format="%Y-%m-%d"),
-                alt.Tooltip("H30 일간등락:Q", title="일간 등락률", format="+.2f"),
+                alt.Tooltip("T30 일간등락:Q", title="일간 등락률", format="+.2f"),
             ],
         )
     )
@@ -318,7 +363,7 @@ performance = performance_frame(current)
 latest = current.iloc[-1]
 current_return = (latest["지수"] / current.iloc[0]["지수"] - 1) * 100
 spy_return = (latest["SPY지수"] / current.iloc[0]["SPY지수"] - 1) * 100
-daily_moves = performance["H30 일간등락"].dropna()
+daily_moves = performance["T30 일간등락"].dropna()
 best_day = float(daily_moves.max())
 worst_day = float(daily_moves.min())
 positive_ratio = float((daily_moves > 0).mean() * 100)
@@ -330,9 +375,9 @@ trump_period = backtest_data[
     (backtest_data["일자"] >= TRUMP_START) & (backtest_data["일자"] <= BACKTEST_END)
 ]
 pre_trump_period = backtest_data[backtest_data["일자"] <= PRE_TRUMP_END]
-trump_h30_stats = period_stats(trump_period, "H30")
+trump_h30_stats = period_stats(trump_period, "T30")
 trump_spy_stats = period_stats(trump_period, "SPY")
-pre_trump_h30_stats = period_stats(pre_trump_period, "H30")
+pre_trump_h30_stats = period_stats(pre_trump_period, "T30")
 pre_trump_spy_stats = period_stats(pre_trump_period, "SPY")
 
 st.markdown(
@@ -374,7 +419,7 @@ with overview:
         st.download_button(
             "▣ Methodology Summary",
             data=(ROOT / "methodology.txt").read_text(encoding="utf-8"),
-            file_name="H30_방법론_요약.txt",
+            file_name="T30_방법론_요약.txt",
             mime="text/plain",
             key="overview_methodology_download",
         )
@@ -406,6 +451,9 @@ with overview:
 
     section_header("Official track", "공식 지수 누적수익률", "기준일을 0%로 두고 실제 등락 범위만 확대해 표시합니다.")
     st.altair_chart(cumulative_return_chart(performance, 370), width="stretch")
+
+    section_header("Index points", "공식 지수 점수(포인트)", "2026년 7월 1일을 1,000으로 두고 T30과 SPY의 원지수 수준을 비교합니다.")
+    st.altair_chart(index_point_chart(current, 370), width="stretch")
     st.markdown(
         f'<div class="live-note">최신 데이터: {latest["일자"].strftime("%Y-%m-%d")} 종가 · 동일가중 가격지수 · 배당 미반영 · 백테스트 구간과 연결하지 않음</div>',
         unsafe_allow_html=True,
@@ -470,7 +518,7 @@ with backtest_tab:
     if len(selected_period) < 2:
         st.warning("성과를 계산하려면 서로 다른 주간 관측치가 2개 이상 필요합니다.")
     else:
-        h30_stats = period_stats(selected_period, "H30")
+        h30_stats = period_stats(selected_period, "T30")
         selected_spy_stats = period_stats(selected_period, "SPY")
         selected_performance = backtest_performance_frame(selected_period)
 
@@ -479,13 +527,13 @@ with backtest_tab:
             f"{selected_period['일자'].iloc[-1].strftime('%Y-%m-%d')} · {len(selected_period)}주 관측"
         )
         c1, c2, c3, c4, c5 = st.columns(5)
-        c1.metric("H30 누적수익", f"{h30_stats['total_return']:+.1f}%", f"SPY {selected_spy_stats['total_return']:+.1f}%", delta_color="off")
+        c1.metric("T30 누적수익", f"{h30_stats['total_return']:+.1f}%", f"SPY {selected_spy_stats['total_return']:+.1f}%", delta_color="off")
         c2.metric("CAGR", f"{h30_stats['cagr']:.1f}%", f"SPY {selected_spy_stats['cagr']:.1f}%", delta_color="off")
         c3.metric("최대낙폭", f"{h30_stats['mdd']:.1f}%", f"SPY {selected_spy_stats['mdd']:.1f}%", delta_color="off")
         c4.metric("연환산 변동성", f"{h30_stats['volatility']:.1f}%", f"SPY {selected_spy_stats['volatility']:.1f}%", delta_color="off")
         c5.metric("샤프", f"{h30_stats['sharpe']:.2f}", f"SPY {selected_spy_stats['sharpe']:.2f}", delta_color="off")
 
-        section_header("Weekly chain", "선택 구간 누적수익률", "선택한 첫 관측치를 0%로 재설정해 H30과 SPY의 흐름을 비교합니다.")
+        section_header("Weekly chain", "선택 구간 누적수익률", "선택한 첫 관측치를 0%로 재설정해 T30과 SPY의 흐름을 비교합니다.")
         st.altair_chart(cumulative_return_chart(selected_performance, 430, "%Y.%m"), width="stretch")
         st.markdown(
             '<div class="live-note">주간 체인 지수 · 매년 빈티지 교체를 반영한 시점가용(PIT) 백테스트 · 2026-06-29 종료 · 2026-07-01 공식 지수와 비연결</div>',
@@ -495,9 +543,9 @@ with backtest_tab:
     section_header("Supporting context", "출범 전후 성과 비교", "트럼프 2기를 핵심 구간으로 보고, 그 이전 관측 구간은 배경 정보로만 제시합니다.")
     comparison = pd.DataFrame(
         [
-            {"구간": "트럼프 2기", "시리즈": "H30", "누적수익률": trump_h30_stats["total_return"]},
+            {"구간": "트럼프 2기", "시리즈": "T30", "누적수익률": trump_h30_stats["total_return"]},
             {"구간": "트럼프 2기", "시리즈": "SPY", "누적수익률": trump_spy_stats["total_return"]},
-            {"구간": "출범 이전", "시리즈": "H30", "누적수익률": pre_trump_h30_stats["total_return"]},
+            {"구간": "출범 이전", "시리즈": "T30", "누적수익률": pre_trump_h30_stats["total_return"]},
             {"구간": "출범 이전", "시리즈": "SPY", "누적수익률": pre_trump_spy_stats["total_return"]},
         ]
     )
@@ -509,11 +557,11 @@ with backtest_tab:
             f"""
             <div class="data-note">
             <b>트럼프 2기</b> · 2025-01-21 — 2026-06-29<br>
-            H30 {trump_h30_stats['total_return']:+.1f}% · SPY {trump_spy_stats['total_return']:+.1f}%<br>
-            최대낙폭 H30 {trump_h30_stats['mdd']:.1f}% · SPY {trump_spy_stats['mdd']:.1f}%<br><br>
+            T30 {trump_h30_stats['total_return']:+.1f}% · SPY {trump_spy_stats['total_return']:+.1f}%<br>
+            최대낙폭 T30 {trump_h30_stats['mdd']:.1f}% · SPY {trump_spy_stats['mdd']:.1f}%<br><br>
             <b>출범 이전</b> · 2023-07-03 — 2025-01-13<br>
-            H30 {pre_trump_h30_stats['total_return']:+.1f}% · SPY {pre_trump_spy_stats['total_return']:+.1f}%<br>
-            최대낙폭 H30 {pre_trump_h30_stats['mdd']:.1f}% · SPY {pre_trump_spy_stats['mdd']:.1f}%
+            T30 {pre_trump_h30_stats['total_return']:+.1f}% · SPY {pre_trump_spy_stats['total_return']:+.1f}%<br>
+            최대낙폭 T30 {pre_trump_h30_stats['mdd']:.1f}% · SPY {pre_trump_spy_stats['mdd']:.1f}%
             </div>
             """,
             unsafe_allow_html=True,
@@ -543,10 +591,13 @@ with live:
     c3.metric("SPY 대비", f"{current_return - spy_return:+.2f}%p")
     c4.metric("최대낙폭", f"{max_drawdown(current['지수']):.2f}%")
 
-    section_header("Cumulative", "기준일 대비 누적수익률", "Y축을 실제 관측 범위로 확대해 H30과 SPY의 상대 흐름을 비교합니다.")
+    section_header("Cumulative", "기준일 대비 누적수익률", "Y축을 실제 관측 범위로 확대해 T30과 SPY의 상대 흐름을 비교합니다.")
     st.altair_chart(cumulative_return_chart(performance, 430), width="stretch")
 
-    section_header("Daily range", "H30 일간 등락률", "상승일과 하락일의 진폭을 별도 막대로 확인합니다.")
+    section_header("Index points", "공식 지수 점수(포인트)", "기준값 1,000에서 출발한 T30과 SPY의 원지수 흐름을 표시합니다.")
+    st.altair_chart(index_point_chart(current, 430), width="stretch")
+
+    section_header("Daily range", "T30 일간 등락률", "상승일과 하락일의 진폭을 별도 막대로 확인합니다.")
     st.altair_chart(daily_return_chart(performance), width="stretch")
 
     p1, p2, p3, p4 = st.columns(4)
@@ -557,15 +608,15 @@ with live:
 
     st.markdown('<div class="live-note">누적수익률 차트는 0% 기준선을 중심으로 관측 구간을 확대합니다. 원지수는 아래 표에서 소수점 네 자리까지 확인할 수 있습니다.</div>', unsafe_allow_html=True)
     st.dataframe(
-        performance[["일자", "지수", "SPY지수", "H30 누적수익률", "H30 일간등락"]].sort_values("일자", ascending=False),
+        performance[["일자", "지수", "SPY지수", "T30 누적수익률", "T30 일간등락"]].sort_values("일자", ascending=False),
         hide_index=True,
         width="stretch",
         column_config={
             "일자": st.column_config.DateColumn("일자", format="YYYY-MM-DD"),
-            "지수": st.column_config.NumberColumn("H30", format="%.4f"),
+            "지수": st.column_config.NumberColumn("T30", format="%.4f"),
             "SPY지수": st.column_config.NumberColumn("SPY", format="%.4f"),
-            "H30 누적수익률": st.column_config.NumberColumn("누적수익률", format="%+.2f%%"),
-            "H30 일간등락": st.column_config.NumberColumn("일간등락", format="%+.2f%%"),
+            "T30 누적수익률": st.column_config.NumberColumn("누적수익률", format="%+.2f%%"),
+            "T30 일간등락": st.column_config.NumberColumn("일간등락", format="%+.2f%%"),
         },
     )
 
@@ -647,7 +698,7 @@ with methodology:
     st.download_button(
         "방법론 요약 다운로드",
         data=(ROOT / "methodology.txt").read_text(encoding="utf-8"),
-        file_name="H30_방법론_요약.txt",
+        file_name="T30_방법론_요약.txt",
         mime="text/plain",
     )
 
