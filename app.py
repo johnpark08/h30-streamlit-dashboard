@@ -167,6 +167,18 @@ def period_stats(df: pd.DataFrame, column: str) -> dict[str, float]:
     }
 
 
+def padded_date_domain(dates: pd.Series) -> list:
+    ordered = pd.Series(pd.to_datetime(dates).dropna().unique()).sort_values()
+    if len(ordered) < 2:
+        padding = pd.Timedelta(days=1)
+    else:
+        padding = ordered.diff().dropna().median() / 2
+    return [
+        (ordered.iloc[0] - padding).to_pydatetime(),
+        (ordered.iloc[-1] + padding).to_pydatetime(),
+    ]
+
+
 def cumulative_return_chart(
     df: pd.DataFrame, height: int = 390, date_format: str = "%m/%d"
 ) -> alt.Chart:
@@ -181,6 +193,7 @@ def cumulative_return_chart(
     y_max = float(long["누적수익률"].max())
     padding = max((y_max - y_min) * 0.13, 0.25)
     domain = [y_min - padding, y_max + padding]
+    date_domain = padded_date_domain(long["일자"])
 
     zero_line = alt.Chart(pd.DataFrame({"기준": [0]})).mark_rule(
         color="#a0adba", strokeDash=[4, 4], strokeWidth=1
@@ -189,7 +202,12 @@ def cumulative_return_chart(
         alt.Chart(long)
         .mark_line(point=alt.OverlayMarkDef(filled=True, size=34), strokeWidth=2.6)
         .encode(
-            x=alt.X("일자:T", title=None, axis=alt.Axis(format=date_format, grid=False, labelColor="#64748b")),
+            x=alt.X(
+                "일자:T",
+                title=None,
+                scale=alt.Scale(domain=date_domain),
+                axis=alt.Axis(format=date_format, grid=False, labelColor="#64748b"),
+            ),
             y=alt.Y(
                 "누적수익률:Q",
                 title="기준일 대비 (%)",
@@ -226,6 +244,7 @@ def index_point_chart(
     y_max = float(long["지수 포인트"].max())
     padding = max((y_max - y_min) * 0.13, 2.0)
     domain = [y_min - padding, y_max + padding]
+    date_domain = padded_date_domain(long["일자"])
 
     base_line = alt.Chart(pd.DataFrame({"기준": [1000]})).mark_rule(
         color="#a0adba", strokeDash=[4, 4], strokeWidth=1
@@ -234,7 +253,12 @@ def index_point_chart(
         alt.Chart(long)
         .mark_line(point=alt.OverlayMarkDef(filled=True, size=34), strokeWidth=2.6)
         .encode(
-            x=alt.X("일자:T", title=None, axis=alt.Axis(format=date_format, grid=False, labelColor="#64748b")),
+            x=alt.X(
+                "일자:T",
+                title=None,
+                scale=alt.Scale(domain=date_domain),
+                axis=alt.Axis(format=date_format, grid=False, labelColor="#64748b"),
+            ),
             y=alt.Y(
                 "지수 포인트:Q",
                 title="지수 포인트",
@@ -284,11 +308,17 @@ def regime_comparison_chart(df: pd.DataFrame, height: int = 250) -> alt.Chart:
 
 def daily_return_chart(df: pd.DataFrame, height: int = 170) -> alt.Chart:
     daily = df.dropna(subset=["T30 일간등락"])
+    date_domain = padded_date_domain(daily["일자"])
     bars = (
         alt.Chart(daily)
         .mark_bar(size=12, cornerRadius=2)
         .encode(
-            x=alt.X("일자:T", title=None, axis=alt.Axis(format="%m/%d", grid=False, labelColor="#64748b")),
+            x=alt.X(
+                "일자:T",
+                title=None,
+                scale=alt.Scale(domain=date_domain),
+                axis=alt.Axis(format="%m/%d", grid=False, labelColor="#64748b"),
+            ),
             y=alt.Y(
                 "T30 일간등락:Q",
                 title="일간 등락 (%)",
