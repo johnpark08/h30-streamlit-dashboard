@@ -86,7 +86,7 @@ st.markdown(
     [data-testid="stMetricLabel"] { color:#718399; font-size:.78rem; }
     [data-testid="stMetricValue"] { color:#17283e; letter-spacing:-.035em; }
     [data-testid="stMetricDelta"] { font-size:.76rem; }
-    [data-testid="stVegaLiteChart"] { box-sizing:border-box; width:100%; overflow:hidden; background:#ffffff; border:1px solid var(--line); border-radius:14px; padding:.8rem 1.15rem .55rem; box-shadow:0 8px 24px rgba(48,74,103,.045); }
+    [data-testid="stVegaLiteChart"] { box-sizing:border-box; width:100%; overflow:hidden; background:#ffffff; border:1px solid var(--line); border-radius:14px; padding:.6rem 0 .3rem; box-shadow:0 8px 24px rgba(48,74,103,.045); }
     [data-testid="stDataFrame"], [data-testid="stTable"] { border:1px solid var(--line); border-radius:12px; overflow:hidden; box-shadow:0 8px 24px rgba(48,74,103,.04); }
     [data-baseweb="tab-list"] { gap:.25rem; background:rgba(255,255,255,.82); border:1px solid var(--line); border-radius:12px; padding:.3rem; box-shadow:0 6px 18px rgba(48,74,103,.04); }
     [data-baseweb="tab"] { border-radius:8px; padding:.55rem .95rem; color:#53677e; }
@@ -230,7 +230,14 @@ def cumulative_return_chart(
             ],
         )
     )
-    return (zero_line + lines).properties(height=height).configure_view(strokeOpacity=0)
+    return (
+        (zero_line + lines)
+        .properties(
+            height=height,
+            padding={"left": 12, "right": 32, "top": 8, "bottom": 12},
+        )
+        .configure_view(strokeOpacity=0)
+    )
 
 
 def index_point_chart(
@@ -281,7 +288,14 @@ def index_point_chart(
             ],
         )
     )
-    return (base_line + lines).properties(height=height).configure_view(strokeOpacity=0)
+    return (
+        (base_line + lines)
+        .properties(
+            height=height,
+            padding={"left": 12, "right": 32, "top": 8, "bottom": 12},
+        )
+        .configure_view(strokeOpacity=0)
+    )
 
 
 def regime_comparison_chart(df: pd.DataFrame, height: int = 250) -> alt.Chart:
