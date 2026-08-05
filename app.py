@@ -521,15 +521,24 @@ with overview:
     section_header("Composition", "2026 정책축 구성", "최종 30종목의 정책축별 편입 수입니다.")
     sector_counts = constituents.groupby("정책축", sort=False).size().rename("종목수")
     sector_df = sector_counts.reset_index()
+    sector_x_max = float(sector_df["종목수"].max()) + 0.8
     sector_chart = (
         alt.Chart(sector_df)
         .mark_bar(color="#0797ad", cornerRadiusEnd=4, height=18)
         .encode(
-            x=alt.X("종목수:Q", title=None, axis=alt.Axis(tickMinStep=1, gridColor="#e5ebf1", labelColor="#64748b")),
+            x=alt.X(
+                "종목수:Q",
+                title=None,
+                scale=alt.Scale(domain=[0, sector_x_max], nice=False),
+                axis=alt.Axis(tickMinStep=1, gridColor="#e5ebf1", labelColor="#64748b"),
+            ),
             y=alt.Y("정책축:N", title=None, sort=None, axis=alt.Axis(labelColor="#526176", labelLimit=240)),
             tooltip=["정책축:N", "종목수:Q"],
         )
-        .properties(height=300)
+        .properties(
+            height=300,
+            padding={"left": 24, "right": 48, "top": 18, "bottom": 24},
+        )
         .configure_view(strokeOpacity=0)
     )
     st.altair_chart(sector_chart, width="stretch")
