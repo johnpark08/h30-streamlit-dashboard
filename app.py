@@ -203,7 +203,7 @@ def cumulative_return_chart(
     ).encode(y="기준:Q")
     lines = (
         alt.Chart(long)
-        .mark_line(point=alt.OverlayMarkDef(filled=True, size=34), strokeWidth=2.6)
+        .mark_line(point=alt.OverlayMarkDef(filled=True, size=34))
         .encode(
             x=alt.X(
                 "일자:T",
@@ -222,6 +222,11 @@ def cumulative_return_chart(
                 title=None,
                 scale=alt.Scale(domain=["T30", "SPY"], range=["#078fa5", "#8291a3"]),
                 legend=alt.Legend(orient="top", direction="horizontal", labelColor="#526176"),
+            ),
+            strokeWidth=alt.StrokeWidth(
+                "시리즈:N",
+                scale=alt.Scale(domain=["T30", "SPY"], range=[4.0, 2.2]),
+                legend=None,
             ),
             tooltip=[
                 alt.Tooltip("일자:T", title="일자", format="%Y-%m-%d"),
@@ -261,7 +266,7 @@ def index_point_chart(
     ).encode(y="기준:Q")
     lines = (
         alt.Chart(long)
-        .mark_line(point=alt.OverlayMarkDef(filled=True, size=34), strokeWidth=2.6)
+        .mark_line(point=alt.OverlayMarkDef(filled=True, size=34))
         .encode(
             x=alt.X(
                 "일자:T",
@@ -280,6 +285,11 @@ def index_point_chart(
                 title=None,
                 scale=alt.Scale(domain=["T30", "SPY"], range=["#078fa5", "#8291a3"]),
                 legend=alt.Legend(orient="top", direction="horizontal", labelColor="#526176"),
+            ),
+            strokeWidth=alt.StrokeWidth(
+                "시리즈:N",
+                scale=alt.Scale(domain=["T30", "SPY"], range=[4.0, 2.2]),
+                legend=None,
             ),
             tooltip=[
                 alt.Tooltip("일자:T", title="일자", format="%Y-%m-%d"),
