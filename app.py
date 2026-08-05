@@ -1,6 +1,6 @@
 from html import escape
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
 import altair as alt
@@ -174,8 +174,8 @@ def padded_date_domain(dates: pd.Series) -> list:
     if len(ordered) < 2:
         padding = pd.Timedelta(days=1)
     else:
-        typical_interval = pd.Timedelta(ordered.diff().dropna().median())
-        padding = max(typical_interval * 1.25, pd.Timedelta(days=1))
+        typical_interval = pd.Timedelta(ordered.diff().dropna().median()).to_pytimedelta()
+        padding = max(typical_interval * 1.25, timedelta(days=1))
     return [
         (ordered.iloc[0] - padding).to_pydatetime(),
         (ordered.iloc[-1] + padding).to_pydatetime(),
