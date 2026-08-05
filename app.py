@@ -61,6 +61,17 @@ st.markdown(
     .section-copy { color:#718399; font-size:.8rem; margin-bottom:.85rem; }
     .data-note { border:1px solid rgba(117,104,215,.2); border-radius:11px; background:#f6f4ff; padding:.8rem .95rem; color:#625b89; font-size:.78rem; line-height:1.6; }
     .live-note { border:1px solid rgba(7,151,173,.2); border-radius:11px; background:#edf9fb; padding:.8rem .95rem; color:#52717a; font-size:.78rem; line-height:1.6; }
+    .benchmark-card { --benchmark-accent:#0797ad; display:grid; grid-template-columns:minmax(250px,.42fr) minmax(0,1fr); gap:1.25rem; align-items:center; margin:.9rem 0 1.25rem; border:1px solid #d8e4ec; border-left:4px solid var(--benchmark-accent); border-radius:14px; background:linear-gradient(120deg,#ffffff 0%,#ffffff 64%,#f1f8fa 100%); padding:1rem 1.15rem; box-shadow:0 8px 24px rgba(48,74,103,.05); }
+    .benchmark-card.negative { --benchmark-accent:#d88946; background:linear-gradient(120deg,#ffffff 0%,#ffffff 64%,#fff8ef 100%); }
+    .benchmark-card.neutral { --benchmark-accent:#70859a; background:linear-gradient(120deg,#ffffff 0%,#ffffff 64%,#f6f8fa 100%); }
+    .benchmark-kicker { color:var(--benchmark-accent); font-size:.62rem; font-weight:750; letter-spacing:.13em; text-transform:uppercase; }
+    .benchmark-title { margin:.2rem 0 .18rem; color:#17283e; font-size:1.02rem; font-weight:740; letter-spacing:-.02em; }
+    .benchmark-values { color:#64788e; font-size:.75rem; }
+    .benchmark-values b { color:#263c53; font-weight:700; }
+    .benchmark-explain { border-left:1px solid #e1e8ef; padding-left:1.25rem; }
+    .benchmark-explain b { display:block; margin-bottom:.25rem; color:#30465d; font-size:.76rem; }
+    .benchmark-explain p { margin:0; color:#61758b; font-size:.78rem; line-height:1.55; }
+    .benchmark-footnote { display:block; margin-top:.28rem; color:#8a99a8; font-size:.64rem; }
     .audit-note { border:1px solid #efd79a; border-radius:11px; background:#fff9e9; padding:1rem 1.1rem; color:#795e28; font-size:.82rem; line-height:1.65; }
     .holdings-summary { display:flex; flex-wrap:wrap; align-items:center; gap:.55rem; margin:.15rem 0 1rem; color:#6a7e94; font-size:.75rem; }
     .holdings-summary b { color:#173047; font-size:.86rem; }
@@ -104,6 +115,8 @@ st.markdown(
       .index-spec-grid { grid-template-columns:1fr; }
       .index-spec, .index-spec:nth-child(3n), .index-spec:nth-last-child(-n+3) { border-right:0; border-bottom:1px solid #e2e9f0; }
       .index-spec:last-child { border-bottom:0; }
+      .benchmark-card { grid-template-columns:1fr; gap:.75rem; }
+      .benchmark-explain { border-left:0; border-top:1px solid #e1e8ef; padding:.75rem 0 0; }
       .holding-card { min-height:auto; }
     }
     </style>
@@ -374,6 +387,49 @@ def section_header(label: str, title: str, copy: str) -> None:
     )
 
 
+def benchmark_context_card(index_return: float, benchmark_return: float) -> None:
+    spread = index_return - benchmark_return
+    if spread > 0.10:
+        tone = "positive"
+        result = "상회"
+        explanation = (
+            "정책 수혜 종목의 상승이 동일가중 구조를 통해 지수 전반에 고르게 반영되고, "
+            "특정 초대형주 의존도가 낮은 효과가 우세한 구간으로 해석할 수 있습니다."
+        )
+    elif spread < -0.10:
+        tone = "negative"
+        result = "하회"
+        explanation = (
+            "동일가중 T30이 시가총액 가중 SPY의 대형주 상승 효과를 덜 반영하고, "
+            "정책축당 최대 6종목 제한으로 시장 주도 섹터의 집중도가 낮은 영향으로 해석할 수 있습니다."
+        )
+    else:
+        tone = "neutral"
+        result = "유사"
+        explanation = (
+            "동일가중·정책축 제한을 적용한 T30과 시가총액 가중 SPY의 구성 차이가 있었지만, "
+            "현재까지 두 구조의 순효과가 대체로 상쇄된 구간입니다."
+        )
+
+    st.markdown(
+        f"""
+        <div class="benchmark-card {tone}">
+          <div>
+            <div class="benchmark-kicker">Benchmark check · since 2026.07.01</div>
+            <div class="benchmark-title">SPY 대비 {abs(spread):.2f}%p {result}</div>
+            <div class="benchmark-values"><b>T30 {index_return:+.2f}%</b>&nbsp;&nbsp;·&nbsp;&nbsp;SPY {benchmark_return:+.2f}%</div>
+          </div>
+          <div class="benchmark-explain">
+            <b>왜 이런 차이가 났나</b>
+            <p>{explanation}</p>
+            <span class="benchmark-footnote">지수 구조에 근거한 잠정 해석 · 종목별 기여도 분해 전</span>
+          </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 AXIS_CARD_CLASS = {
     "반도체·AI": "axis-ai",
     "방위·우주": "axis-defense",
@@ -507,6 +563,7 @@ with overview:
     c2.metric("SPY 대비", f"{current_return - spy_return:+.2f}%p")
     c3.metric("트럼프 2기 백테스트", f"{trump_h30_stats['total_return']:+.1f}%", f"SPY {trump_spy_stats['total_return']:+.1f}%", delta_color="off")
     c4.metric("최종 구성", "30종목", "동일가중 3.33%")
+    benchmark_context_card(current_return, spy_return)
 
     section_header("Official track", "공식 지수 누적수익률", "기준일을 0%로 두고 실제 등락 범위만 확대해 표시합니다.")
     st.altair_chart(cumulative_return_chart(performance, 370), width="stretch")
@@ -658,6 +715,7 @@ with live:
     c2.metric("출시 후 수익률", f"{current_return:+.2f}%")
     c3.metric("SPY 대비", f"{current_return - spy_return:+.2f}%p")
     c4.metric("최대낙폭", f"{max_drawdown(current['지수']):.2f}%")
+    benchmark_context_card(current_return, spy_return)
 
     section_header("Cumulative", "기준일 대비 누적수익률", "Y축을 실제 관측 범위로 확대해 T30과 SPY의 상대 흐름을 비교합니다.")
     st.altair_chart(cumulative_return_chart(performance, 430), width="stretch")
