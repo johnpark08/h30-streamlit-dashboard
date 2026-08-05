@@ -174,7 +174,7 @@ def padded_date_domain(dates: pd.Series) -> list:
     if len(ordered) < 2:
         padding = pd.Timedelta(days=1)
     else:
-        typical_interval = ordered.diff().dropna().median()
+        typical_interval = pd.Timedelta(ordered.diff().dropna().median())
         padding = max(typical_interval * 1.25, pd.Timedelta(days=1))
     return [
         (ordered.iloc[0] - padding).to_pydatetime(),
