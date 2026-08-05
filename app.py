@@ -1,5 +1,7 @@
 from html import escape
 from pathlib import Path
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 import altair as alt
 import pandas as pd
@@ -391,6 +393,8 @@ constituents = load_constituents()
 backtest_data = load_backtest()
 performance = performance_frame(current)
 latest = current.iloc[-1]
+today_kst = datetime.now(ZoneInfo("Asia/Seoul"))
+today_label = f"{today_kst.year}년 {today_kst.month}월 {today_kst.day}일"
 current_return = (latest["지수"] / current.iloc[0]["지수"] - 1) * 100
 spy_return = (latest["SPY지수"] / current.iloc[0]["SPY지수"] - 1) * 100
 daily_moves = performance["T30 일간등락"].dropna()
@@ -614,7 +618,7 @@ with backtest_tab:
         st.caption("매년 30종목 · 정책축당 최대 6종목 · 2019~2025 빈티지")
 
 with live:
-    section_header("Current · Official", "2026년 8월 4일 공식 지수", "누적 방향과 일간 진폭을 분리해 표시합니다.")
+    section_header("Current · Official", f"{today_label} 공식 지수", "누적 방향과 일간 진폭을 분리해 표시합니다.")
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("최신 종가", f"{latest['지수']:,.2f}", latest["일자"].strftime("%Y-%m-%d"))
     c2.metric("출시 후 수익률", f"{current_return:+.2f}%")
