@@ -239,7 +239,7 @@ def cumulative_return_chart(
         (zero_line + lines)
         .properties(
             height=height,
-            padding={"left": 12, "right": 32, "top": 8, "bottom": 12},
+            padding={"left": 24, "right": 48, "top": 18, "bottom": 24},
         )
         .configure_view(strokeOpacity=0)
     )
@@ -302,7 +302,7 @@ def index_point_chart(
         (base_line + lines)
         .properties(
             height=height,
-            padding={"left": 12, "right": 32, "top": 8, "bottom": 12},
+            padding={"left": 24, "right": 48, "top": 18, "bottom": 24},
         )
         .configure_view(strokeOpacity=0)
     )
